@@ -102,7 +102,7 @@ const HeroSection = () => {
             fontSize: 'clamp(2.8rem, 10vw, 4.2rem)', fontWeight: 400,
             lineHeight: 1.1, margin: '0 0 6px', letterSpacing: '0.02em',
             textShadow: '0 4px 16px rgba(44,24,16,0.06)' }}>
-          {couple.groomName}
+          {couple.brideName}
         </motion.h1>
 
         <motion.div variants={item}
@@ -117,7 +117,7 @@ const HeroSection = () => {
             fontSize: 'clamp(2.8rem, 10vw, 4.2rem)', fontWeight: 400,
             lineHeight: 1.1, margin: '6px 0 26px', letterSpacing: '0.02em',
             textShadow: '0 4px 16px rgba(44,24,16,0.06)' }}>
-          {couple.brideName}
+          {couple.groomName}
         </motion.h1>
 
         {/* Tagline */}

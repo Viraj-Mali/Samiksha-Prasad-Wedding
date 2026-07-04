@@ -129,7 +129,7 @@ const SaveTheDate = () => {
               fontSize: 'clamp(1.4rem, 5.5vw, 2rem)', fontWeight: 500,
               color: 'var(--color-gold-deep)', letterSpacing: '0.02em',
             }}>
-            {couple.groomName} <span style={{ fontSize: '0.8em', color: 'var(--color-gold-dark)' }}>&amp;</span> {couple.brideName}
+            {couple.brideName} <span style={{ fontSize: '0.8em', color: 'var(--color-gold-dark)' }}>&amp;</span> {couple.groomName}
           </motion.p>
         </div>
       </motion.div>

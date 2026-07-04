@@ -47,7 +47,7 @@ const InvitationMessage = () => {
 
             {/* Couple */}
             <p className="font-serif text-xl font-medium" style={{ color: 'var(--color-choco)' }}>
-              {weddingData.couple.groomName} &amp; {weddingData.couple.brideName}
+              {weddingData.couple.brideName} &amp; {weddingData.couple.groomName}
             </p>
             <p className="font-lora italic text-sm mt-1" style={{ color: 'var(--color-sage)' }}>
               {weddingData.wedding.weddingDate}

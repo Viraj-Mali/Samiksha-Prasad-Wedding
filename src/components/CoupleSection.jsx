@@ -102,15 +102,6 @@ const CoupleSection = () => {
         </div>
 
         <ProfileCard
-          name={couple.groomName}
-          qualification={couple.groomQualification}
-          parents={couple.groomParents}
-          address={couple.groomAddress}
-          initial="P"
-          photo={couple.groomPhoto || weddingData.assets.groomPhoto}
-          side="groom"
-        />
-        <ProfileCard
           name={couple.brideName}
           qualification={couple.brideQualification}
           parents={couple.brideParents}
@@ -118,6 +109,15 @@ const CoupleSection = () => {
           initial="S"
           photo={couple.bridePhoto || weddingData.assets.bridePhoto}
           side="bride"
+        />
+        <ProfileCard
+          name={couple.groomName}
+          qualification={couple.groomQualification}
+          parents={couple.groomParents}
+          address={couple.groomAddress}
+          initial="P"
+          photo={couple.groomPhoto || weddingData.assets.groomPhoto}
+          side="groom"
         />
       </div>
     </section>

@@ -62,7 +62,7 @@ const Footer = () => {
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
           marginBottom: 6, lineHeight: 1.15, letterSpacing: '0.02em',
         }}>
-          {couple.groomName} <span style={{ fontSize: '0.7em', color: 'rgba(201,168,76,0.8)' }}>&amp;</span> {couple.brideName}
+          {couple.brideName} <span style={{ fontSize: '0.7em', color: 'rgba(201,168,76,0.8)' }}>&amp;</span> {couple.groomName}
         </h2>
 
         {/* Date */}
