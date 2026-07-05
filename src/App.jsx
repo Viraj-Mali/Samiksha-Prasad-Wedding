@@ -63,8 +63,10 @@ function App() {
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("beforeunload", handlePageHide);
       
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (audio) {
+        audio.pause();
+      }
+      if (audioRef.current === audio) {
         audioRef.current = null;
       }
     };
@@ -85,13 +87,15 @@ function App() {
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
-    if (isPlaying) {
+    
+    // Check actual audio state rather than React state to avoid sync issues
+    if (!audioRef.current.paused) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
       audioRef.current.play()
         .then(() => setIsPlaying(true))
-        .catch(() => {});
+        .catch(() => setIsPlaying(false));
     }
   };
 
