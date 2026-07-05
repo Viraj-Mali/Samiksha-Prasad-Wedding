@@ -82,9 +82,9 @@ export const weddingData = {
     heading: "With Love",
     mainLine: "Gholap Family and Relatives",
     members: [
-      { name: "TODO: Bride side invitee 1", phone: "" },
-      { name: "TODO: Bride side invitee 2", phone: "" },
-      { name: "TODO: Bride side invitee 3", phone: "" },
+      { name: "Mr. Bhimraj Shivram Patil Gholap", phone: "" },
+      { name: "Mr. Anil Bhimraj Patil Gholap", phone: "" },
+      { name: "Mr. Kshitij Anil Patil Gholap", phone: "" },
     ],
   },
 
