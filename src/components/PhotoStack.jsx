@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { X } from 'lucide-react';
 import { weddingData } from '../data/index.js';
 
 const customEase = [0.22, 1, 0.36, 1]; // Premium cinematic easing
@@ -92,7 +91,7 @@ const PhotoStack = () => {
   const [visibleIndexes, setVisibleIndexes] = useState([0, 1, 2]);
   
   const [isInitialReveal, setIsInitialReveal] = useState(true);
-  const [lightboxImg, setLightboxImg] = useState(null);
+  const timerRef = useRef(null);
   
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
@@ -105,6 +104,20 @@ const PhotoStack = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const shiftImages = () => {
+    setVisibleIndexes(prev => {
+      const nextIndex = (prev[2] + 1) % displayImages.length;
+      return [prev[1], prev[2], nextIndex];
+    });
+  };
+
+  const handleNext = () => {
+    shiftImages();
+    // Reset auto interval so it doesn't double-jump if click occurs right before tick
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(shiftImages, 4500);
+  };
+
   useEffect(() => {
     if (!inView) return;
     
@@ -112,16 +125,12 @@ const PhotoStack = () => {
     const timer1 = setTimeout(() => setIsInitialReveal(false), 3000);
     
     // Auto interval: Stream moves every 4500ms
-    const timer2 = setInterval(() => {
-      setVisibleIndexes(prev => {
-        // Find the next consecutive index to enter from bottom
-        const nextIndex = (prev[2] + 1) % displayImages.length;
-        // Shift array: [middle becomes front, back becomes middle, new enters back]
-        return [prev[1], prev[2], nextIndex];
-      });
-    }, 4500);
+    timerRef.current = setInterval(shiftImages, 4500);
     
-    return () => { clearTimeout(timer1); clearInterval(timer2); };
+    return () => { 
+      clearTimeout(timer1); 
+      if (timerRef.current) clearInterval(timerRef.current); 
+    };
   }, [inView, displayImages.length]);
 
   // Fixed visual slots as strictly requested
@@ -202,12 +211,10 @@ const PhotoStack = () => {
                     left: 0, right: 0, top: 0, bottom: 0, margin: 'auto', // Perfectly centered
                     width: '82vw', maxWidth: isDesktop ? '380px' : '360px',
                     aspectRatio: '3/4',
-                    willChange: 'transform, opacity, z-index'
+                    willChange: 'transform, opacity, z-index',
+                    cursor: 'pointer'
                   }}
-                  onClick={() => {
-                    // Only click front photo
-                    if (slotIndex === 0) setLightboxImg(displayImages[photoIndex]);
-                  }}
+                  onClick={handleNext}
                 >
                   <PhotoCard src={displayImages[photoIndex]} caption={captions[photoIndex]} isDesktop={isDesktop} />
                 </motion.div>
@@ -216,44 +223,6 @@ const PhotoStack = () => {
           </AnimatePresence>
         </motion.div>
       </div>
-
-      {/* LIGHTBOX PREVIEW - Soft Cinematic Zoom */}
-      <AnimatePresence>
-        {lightboxImg && (
-          <motion.div 
-            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }} 
-            animate={{ opacity: 1, backdropFilter: 'blur(12px)' }} 
-            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }} 
-            transition={{ duration: 1.0, ease: customEase }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.65)' }}
-            onClick={() => setLightboxImg(null)}
-          >
-            <motion.button 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.0 }}
-              className="absolute top-6 right-6 text-white p-2 hover:opacity-75 transition-opacity"
-              onClick={() => setLightboxImg(null)}
-            >
-              <X size={36} />
-            </motion.button>
-            <motion.div
-              initial={{ scale: 0.88, opacity: 0, y: 15 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 5 }}
-              transition={{ duration: 1.1, ease: customEase, delay: 0.1 }}
-              style={{ background: '#fff', padding: '12px 12px 40px 12px', borderRadius: 4, boxShadow: '0 30px 60px rgba(0,0,0,0.4)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img 
-                src={lightboxImg} 
-                alt="Lightbox" 
-                style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'cover' }} 
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
     </section>
   );
 };
