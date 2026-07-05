@@ -1,172 +1,253 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { X } from 'lucide-react';
 import { weddingData } from '../data/index.js';
 
-const PhotoCard = ({ src, alt, rotation = 0, style = {}, onClick, isMain = false }) => {
-  const [error, setError] = useState(false);
-  
+const customEase = [0.22, 1, 0.36, 1]; // Premium cinematic easing
+
+const galleryStyles = `
+  @keyframes galleryFall {
+    0% { transform: translateY(-10vh) rotate(0deg) translateX(0); opacity: 0; }
+    10% { opacity: 0.35; }
+    90% { opacity: 0.35; }
+    100% { transform: translateY(112dvh) rotate(360deg) translateX(40px); opacity: 0; }
+  }
+`;
+
+const GalleryPetals = () => {
   return (
-    <motion.div
-      className="photo-card"
-      onClick={onClick}
-      style={{
-        background: '#fff',
-        padding: isMain ? '16px 16px 50px 16px' : '10px 10px 32px 10px',
-        boxShadow: '0 15px 35px rgba(0,0,0,0.15), 0 5px 15px rgba(0,0,0,0.05)',
-        border: '1px solid rgba(0,0,0,0.06)',
-        borderRadius: 2,
-        cursor: onClick ? 'pointer' : 'default',
-        transform: `rotate(${rotation}deg)`,
-        position: 'relative',
-        ...style
-      }}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      whileHover={{ scale: 1.03, zIndex: 30, transition: { duration: 0.3 } }}
-    >
-      <div style={{ width: '100%', height: '100%', background: '#F8F5F0', overflow: 'hidden', borderRadius: 2 }}>
-        {!error ? (
-          <img 
-            src={src} 
-            alt={alt} 
-            onError={() => setError(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-            loading="lazy"
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #FDF9F2, #EBF0EB)' }}>
-            <span style={{ fontFamily: 'var(--font-garamond)', fontSize: isMain ? 22 : 16, color: 'var(--color-sage-dark)', fontStyle: 'italic', textAlign: 'center' }}>
-              🌸<br/>Forever<br/>Moments
-            </span>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+      <style>{galleryStyles}</style>
+      {[...Array(8)].map((_, i) => {
+        // Slow speed for iPhone performance
+        const dur = 22 + (i * 2);
+        const delay = i * 2.5;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${8 + (i * 12)}%`,
+              top: '-10vh',
+              fontSize: i % 3 === 0 ? '14px' : '9px',
+              color: 'var(--color-gold)',
+              filter: 'blur(1px)',
+              opacity: 0,
+              animation: `galleryFall ${dur}s linear ${delay}s infinite`,
+              willChange: 'transform'
+            }}
+          >
+            ✦
           </div>
-        )}
+        );
+      })}
+    </div>
+  );
+};
+
+const PhotoCard = ({ src, caption, isDesktop }) => {
+  const [error, setError] = useState(false);
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: '#FDFBF7',
+      padding: isDesktop ? '14px 14px 54px 14px' : '10px 10px 44px 10px',
+      boxShadow: '0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.08)',
+      borderRadius: '4px',
+      backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100\' height=\'100\' filter=\'url(%23noise)\' opacity=\'0.03\'/%3E%3C/svg%3E")',
+      display: 'flex', flexDirection: 'column'
+    }}>
+      <div style={{ flex: 1, overflow: 'hidden', borderRadius: '2px', background: '#EAE6DF' }}>
+        {!error && <img src={src} onError={() => setError(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} loading="lazy" />}
       </div>
-    </motion.div>
+      <div style={{ position: 'absolute', bottom: isDesktop ? '20px' : '14px', left: 0, right: 0, textAlign: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--color-sage-dark)', fontSize: isDesktop ? '16px' : '13px' }}>
+          {caption || "Forever Moments"}
+        </span>
+      </div>
+    </div>
   );
 };
 
 const PhotoStack = () => {
   const { assets } = weddingData;
   const images = assets.galleryImages || [];
-  
-  // Make sure we have at least 3 images for mobile, 5 for desktop layout
   const displayImages = [
     images[0] || '/images/placeholder1.jpg',
     images[1] || '/images/placeholder2.jpg',
     images[2] || '/images/placeholder3.jpg',
     images[3] || '/images/placeholder4.jpg',
     images[4] || '/images/placeholder5.jpg',
+  ].slice(0, 5); // Ensure safe array bounds
+
+  const captions = [
+    "A beautiful start",
+    "Together forever",
+    "Our perfect day",
+    "Endless love",
+    "Cherished memories"
   ];
 
+  // State: Maintain exactly 3 visible photo indices
+  const [visibleIndexes, setVisibleIndexes] = useState([0, 1, 2]);
+  
+  const [isInitialReveal, setIsInitialReveal] = useState(true);
   const [lightboxImg, setLightboxImg] = useState(null);
+  
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    setIsDesktop(window.innerWidth > 768);
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Floral Corner SVG
-  const FloralCorner = ({ style }) => (
-    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" style={{ position: 'absolute', opacity: 0.4, ...style }}>
-      <path d="M10 10 Q40 10 60 40 Q40 60 10 90 Q30 50 10 10" stroke="#C9A84C" strokeWidth="1.5" />
-      <circle cx="60" cy="40" r="3" fill="#C9A84C" />
-      <circle cx="45" cy="55" r="2" fill="#C9A84C" />
-    </svg>
-  );
+  useEffect(() => {
+    if (!inView) return;
+    
+    // Disable initial reveal stagger delay after sequence finishes
+    const timer1 = setTimeout(() => setIsInitialReveal(false), 3000);
+    
+    // Auto interval: Stream moves every 4500ms
+    const timer2 = setInterval(() => {
+      setVisibleIndexes(prev => {
+        // Find the next consecutive index to enter from bottom
+        const nextIndex = (prev[2] + 1) % displayImages.length;
+        // Shift array: [middle becomes front, back becomes middle, new enters back]
+        return [prev[1], prev[2], nextIndex];
+      });
+    }, 4500);
+    
+    return () => { clearTimeout(timer1); clearInterval(timer2); };
+  }, [inView, displayImages.length]);
+
+  // Fixed visual slots as strictly requested
+  const variants = {
+    enter: { 
+      y: isDesktop ? 230 * 1.3 : 230, scale: 0.75, opacity: 0, zIndex: 5, rotate: 0 
+    },
+    slot0: { 
+      y: 0, scale: 1, opacity: 1, rotate: -1, zIndex: 30 
+    },
+    slot1: { 
+      y: isDesktop ? 70 * 1.3 : 70, scale: 0.92, opacity: 0.78, rotate: 3, zIndex: 20 
+    },
+    slot2: { 
+      y: isDesktop ? 135 * 1.3 : 135, scale: 0.84, opacity: 0.55, rotate: -4, zIndex: 10 
+    },
+    exit: { 
+      y: isDesktop ? -120 * 1.3 : -120, scale: 1.03, opacity: 0, zIndex: 40, rotate: 2 
+    }
+  };
 
   return (
-    <section className="py-24 px-4 overflow-hidden relative" style={{ background: 'linear-gradient(180deg, #FDF9F2 0%, #EBF0EB 100%)' }}>
+    <section ref={ref} className="px-4 overflow-hidden relative" style={{ 
+      paddingTop: '100px', 
+      paddingBottom: '240px', // Extra bottom padding so buttons do not overlap
+      background: 'linear-gradient(180deg, #FDF9F2 0%, #EBF0EB 100%)',
+    }}>
+      <GalleryPetals />
       
-      {/* Floral Corners */}
-      <FloralCorner style={{ top: 20, left: 20 }} />
-      <FloralCorner style={{ top: 20, right: 20, transform: 'scaleX(-1)' }} />
-      <FloralCorner style={{ bottom: 20, left: 20, transform: 'scaleY(-1)' }} />
-      <FloralCorner style={{ bottom: 20, right: 20, transform: 'scale(-1, -1)' }} />
+      {/* Soft Glow */}
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80vw', height: '80vw', background: 'radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%)', zIndex: 0, pointerEvents: 'none' }} />
 
-      {/* Section header */}
+      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }} transition={{ duration: 0.9 }}
-        style={{ textAlign: 'center', marginBottom: 56, position: 'relative', zIndex: 10 }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+        transition={{ duration: 1.4, ease: customEase }}
+        style={{ textAlign: 'center', marginBottom: '40px', position: 'relative', zIndex: 10 }}
       >
-        <p style={{ fontFamily: 'var(--font-lora)', textTransform: 'uppercase',
-          letterSpacing: '0.4em', fontSize: 11, color: 'var(--color-gold-deep)', marginBottom: 12 }}>
-          Our Memories
-        </p>
-        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2.5rem, 7vw, 3.5rem)',
-          color: 'var(--color-choco)', fontWeight: 400, margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ height: '1px', width: '50px', background: 'linear-gradient(90deg, transparent, var(--color-gold))' }} />
+          <span style={{ color: 'var(--color-gold)', fontSize: '18px' }}>✧</span>
+          <div style={{ height: '1px', width: '50px', background: 'linear-gradient(-90deg, transparent, var(--color-gold))' }} />
+        </div>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2.5rem, 8vw, 3.8rem)', color: 'var(--color-choco)', fontWeight: 400, margin: '0 0 12px 0' }}>
           Forever Moments
         </h2>
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <div style={{ height: 1, width: 60, background: 'linear-gradient(90deg, transparent, var(--color-gold))' }} />
-          <span style={{ color: 'var(--color-gold)', fontSize: 18 }}>✧</span>
-          <div style={{ height: 1, width: 60, background: 'linear-gradient(-90deg, transparent, var(--color-gold))' }} />
-        </div>
       </motion.div>
 
-      {/* MOBILE LAYOUT */}
-      <div className="flex md:hidden flex-col items-center relative" style={{ height: 480, width: '100%', maxWidth: 400, margin: '0 auto' }}>
-        <PhotoCard 
-          src={displayImages[0]} alt="Gallery Main" rotation={-3} isMain={true} onClick={() => setLightboxImg(displayImages[0])}
-          style={{ position: 'absolute', top: 0, width: '72%', height: 320, zIndex: 10 }} 
-        />
-        <PhotoCard 
-          src={displayImages[1]} alt="Gallery Sub 1" rotation={-10} onClick={() => setLightboxImg(displayImages[1])}
-          style={{ position: 'absolute', top: 220, left: '2%', width: '52%', height: 200, zIndex: 5 }} 
-        />
-        <PhotoCard 
-          src={displayImages[2]} alt="Gallery Sub 2" rotation={8} onClick={() => setLightboxImg(displayImages[2])}
-          style={{ position: 'absolute', top: 190, right: '2%', width: '56%', height: 230, zIndex: 6 }} 
-        />
+      {/* Vertical Memory Stream Stack Container */}
+      <div style={{ position: 'relative', width: '100%', height: isDesktop ? '600px' : '65vh', minHeight: '520px', maxHeight: '700px', margin: '0 auto', zIndex: 10 }}>
+        
+        {/* Subtle Idle Floating Wrapper */}
+        <motion.div 
+          animate={inView ? { y: [0, -8, 0] } : {}} 
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} 
+          style={{ width: '100%', height: '100%', position: 'absolute' }}
+        >
+          {/* PopLayout mode is critical for the exit animation to fire smoothly while siblings move up */}
+          <AnimatePresence mode="popLayout">
+            {inView && visibleIndexes.map((photoIndex, slotIndex) => {
+              // The key tracks the actual photo data
+              return (
+                <motion.div
+                  key={photoIndex}
+                  layout
+                  initial="enter"
+                  animate={`slot${slotIndex}`}
+                  exit="exit"
+                  variants={variants}
+                  transition={{ 
+                    duration: 1.8, 
+                    ease: customEase,
+                    delay: isInitialReveal ? slotIndex * 0.4 : 0 // Stagger only the very first entrance
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: 0, right: 0, top: 0, bottom: 0, margin: 'auto', // Perfectly centered
+                    width: '82vw', maxWidth: isDesktop ? '380px' : '360px',
+                    aspectRatio: '3/4',
+                    willChange: 'transform, opacity, z-index'
+                  }}
+                  onClick={() => {
+                    // Only click front photo
+                    if (slotIndex === 0) setLightboxImg(displayImages[photoIndex]);
+                  }}
+                >
+                  <PhotoCard src={displayImages[photoIndex]} caption={captions[photoIndex]} isDesktop={isDesktop} />
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </motion.div>
       </div>
 
-      {/* DESKTOP LAYOUT (Masonry / Staggered) */}
-      <div className="hidden md:flex flex-wrap justify-center items-start gap-8 relative" style={{ maxWidth: 1100, margin: '0 auto', padding: '0 40px' }}>
-        <PhotoCard 
-          src={displayImages[1]} alt="Gallery 2" rotation={-4} onClick={() => setLightboxImg(displayImages[1])}
-          style={{ width: 260, height: 320, marginTop: 40 }}
-        />
-        <PhotoCard 
-          src={displayImages[0]} alt="Gallery 1" rotation={2} isMain={true} onClick={() => setLightboxImg(displayImages[0])}
-          style={{ width: 320, height: 400, marginTop: 0 }}
-        />
-        <PhotoCard 
-          src={displayImages[2]} alt="Gallery 3" rotation={-2} onClick={() => setLightboxImg(displayImages[2])}
-          style={{ width: 280, height: 350, marginTop: 70 }}
-        />
-        <PhotoCard 
-          src={displayImages[3]} alt="Gallery 4" rotation={5} onClick={() => setLightboxImg(displayImages[3])}
-          style={{ width: 250, height: 300, marginTop: 20 }}
-        />
-        <PhotoCard 
-          src={displayImages[4]} alt="Gallery 5" rotation={-3} onClick={() => setLightboxImg(displayImages[4])}
-          style={{ width: 290, height: 370, marginTop: 50 }}
-        />
-      </div>
-
-      {/* LIGHTBOX PREVIEW */}
+      {/* LIGHTBOX PREVIEW - Soft Cinematic Zoom */}
       <AnimatePresence>
         {lightboxImg && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0, backdropFilter: 'blur(0px)' }} 
+            animate={{ opacity: 1, backdropFilter: 'blur(12px)' }} 
+            exit={{ opacity: 0, backdropFilter: 'blur(0px)' }} 
+            transition={{ duration: 1.0, ease: customEase }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.65)' }}
             onClick={() => setLightboxImg(null)}
           >
-            <button 
-              className="absolute top-6 right-6 text-white p-2"
+            <motion.button 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1.0 }}
+              className="absolute top-6 right-6 text-white p-2 hover:opacity-75 transition-opacity"
               onClick={() => setLightboxImg(null)}
             >
-              <X size={32} />
-            </button>
+              <X size={36} />
+            </motion.button>
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              style={{ background: '#fff', padding: '12px 12px 40px 12px', borderRadius: 4 }}
+              initial={{ scale: 0.88, opacity: 0, y: 15 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.95, opacity: 0, y: 5 }}
+              transition={{ duration: 1.1, ease: customEase, delay: 0.1 }}
+              style={{ background: '#fff', padding: '12px 12px 40px 12px', borderRadius: 4, boxShadow: '0 30px 60px rgba(0,0,0,0.4)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <img 
                 src={lightboxImg} 
                 alt="Lightbox" 
-                style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'contain' }} 
+                style={{ maxWidth: '90vw', maxHeight: '80vh', objectFit: 'cover' }} 
               />
             </motion.div>
           </motion.div>
