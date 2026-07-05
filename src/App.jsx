@@ -24,15 +24,45 @@ function App() {
   const audioRef = useRef(null);
 
   useEffect(() => {
+    let audio;
     // Pre-load audio, but do NOT play
     try {
       audioRef.current = new Audio(weddingData.assets.music);
       audioRef.current.loop = true;
       audioRef.current.volume = 0.45;
+      audio = audioRef.current;
     } catch {
       // Music file may not exist — that's OK
     }
+
+    if (!audio) return;
+
+    const pauseMusic = () => {
+      audio.pause();
+      setIsPlaying(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pauseMusic();
+      }
+    };
+
+    const handlePageHide = () => {
+      pauseMusic();
+      audio.currentTime = 0;
+    };
+
+    // Safari and other mobile browsers background logic
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
+      
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
