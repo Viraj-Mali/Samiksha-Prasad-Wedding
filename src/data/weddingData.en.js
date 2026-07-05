@@ -46,7 +46,7 @@ export const weddingData = {
       icon: "🌿",
       date: "Tuesday, 07 July 2026",
       time: "To be announced",
-      venue: "Chincholi Gurav",
+      venue: "HanumantGaon",
       isoDate: "2026-07-07T00:00:00+05:30",
       calendarTitle: "Mehendi Ceremony – Samiksha & Dr. Prasad",
       illustration: "/images/events/mehendi-couple.png", 
