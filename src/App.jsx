@@ -22,30 +22,39 @@ function App() {
   const [entered, setEntered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+  const playPromiseRef = useRef(null);
 
   useEffect(() => {
-    let audio;
-    // Pre-load audio, but do NOT play
-    try {
-      audioRef.current = new Audio(weddingData.assets.music);
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0.45;
-      audio = audioRef.current;
-    } catch {
-      // Music file may not exist — that's OK
+    // Singleton pattern to ensure only ONE audio instance ever exists
+    if (!window.__weddingAudio) {
+      try {
+        window.__weddingAudio = new Audio(weddingData.assets.music);
+        window.__weddingAudio.loop = true;
+        window.__weddingAudio.volume = 0.45;
+      } catch {
+        // Audio not available
+      }
     }
+    
+    audioRef.current = window.__weddingAudio;
+    const audio = audioRef.current;
 
     if (!audio) return;
 
     const pauseMusic = () => {
-      audio.pause();
-      setIsPlaying(false);
+      if (playPromiseRef.current) {
+        playPromiseRef.current.then(() => {
+          audio.pause();
+          setIsPlaying(false);
+        }).catch(() => {});
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
     };
 
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        pauseMusic();
-      }
+      if (document.hidden) pauseMusic();
     };
 
     const handlePageHide = () => {
@@ -53,7 +62,6 @@ function App() {
       audio.currentTime = 0;
     };
 
-    // Safari and other mobile browsers background logic
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", handlePageHide);
     window.addEventListener("beforeunload", handlePageHide);
@@ -62,40 +70,55 @@ function App() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("beforeunload", handlePageHide);
-      
-      if (audio) {
-        audio.pause();
-      }
-      if (audioRef.current === audio) {
-        audioRef.current = null;
-      }
+      // Do NOT destroy window.__weddingAudio here, just clean up listeners.
+      // This prevents hot-reload ghosting completely.
     };
   }, []);
 
   const handleEnter = () => {
     setEntered(true);
-    // Try to start music
-    if (audioRef.current) {
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => {
-          // Autoplay blocked or file missing — silently ignore
+    const audio = audioRef.current;
+    if (audio) {
+      const promise = audio.play();
+      if (promise !== undefined) {
+        playPromiseRef.current = promise;
+        promise.then(() => {
+          setIsPlaying(true);
+          playPromiseRef.current = null;
+        }).catch(() => {
           setIsPlaying(false);
+          playPromiseRef.current = null;
         });
+      }
     }
   };
 
   const toggleMusic = () => {
-    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
     
-    // Check actual audio state rather than React state to avoid sync issues
-    if (!audioRef.current.paused) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+    if (!audio.paused) {
+      if (playPromiseRef.current) {
+        playPromiseRef.current.then(() => {
+          audio.pause();
+          setIsPlaying(false);
+        }).catch(() => {});
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
     } else {
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      const promise = audio.play();
+      if (promise !== undefined) {
+        playPromiseRef.current = promise;
+        promise.then(() => {
+          setIsPlaying(true);
+          playPromiseRef.current = null;
+        }).catch(() => {
+          setIsPlaying(false);
+          playPromiseRef.current = null;
+        });
+      }
     }
   };
 
