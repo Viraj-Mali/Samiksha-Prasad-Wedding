@@ -15,7 +15,7 @@ export const weddingData = {
     groomName: "Dr. Prasad",
     groomFullName: "Dr. Prasad",
     groomQualification: "B.H.M.S.",
-    groomParents: "Son of Mrs. Asha & Mr. Sanjay Bhikari Patil Godge",
+    groomParents: "Son of Mrs. Asha & Mr. Sanjay Bhikahari Patil Godage",
     groomAddress: "Chincholi Gurav, Sangamner, Ahilyanagar",
   },
 
